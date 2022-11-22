@@ -1,4 +1,4 @@
-<h1><span style="color:#1C78C0"> Educator &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; Writer &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; Organizer</span></h1>
+<h3><span style="color:#1C78C0"> Educator &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; Writer &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; Organizer</span></h3>
 
 ![Brian Lee](briantl-host.github.io/LeeBrian02.JPG)
 
