@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Grid Pattern Builder</title>
+<script src='https://unpkg.com/mathlive'></script>
+<style>
+:root{--cell:24px;--border:#cfcfcf}
+body{font-family:Arial,sans-serif;margin:0;padding:16px;color:#222}
+.topbar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid #ddd;padding:10px;display:flex;gap:12px;align-items:center}
+.left{display:flex;gap:10px;align-items:center;min-width:220px}.logo{}.title{font-size:24px;font-weight:700}.meta{flex:1;max-width:420px;padding:8px}
+.menu{margin-left:none;position:relative}.drop{display:none;position:absolute;right:0;top:36px;background:#fff;border:1px solid #ccc}.menu.open .drop{display:block}.drop button{display:block;width:220px;padding:10px;border:none;background:#fff;text-align:left;cursor:pointer}
+.row{margin:18px 0 28px}.gridrow{display:flex;gap:16px;align-items:flex-start}.grids{display:flex;gap:16px}.panel{display:flex;flex-direction:column;align-items:center}.coords{margin-bottom:6px}.coords input{width:48px;text-align:center}.coords .xslot{display:inline-block;min-width:48px;text-align:center}.coords .xslot,.coords .xslot input{width:56px;min-width:56px}.area{display:inline-block;min-width:48px;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(10,var(--cell));grid-template-rows:repeat(10,var(--cell));gap:0}.cell{width:var(--cell);height:var(--cell);border:1px solid var(--border);box-sizing:border-box;background:#fff}
+.toggle{padding:8px;cursor:pointer}.formula{width:816px;max-width:100%;text-align:center;margin-top:10px}.formula math-field{min-width:420px;border:1px solid #ccc;padding:6px}.formula math-field::part(menu-toggle),.formula math-field::part(virtual-keyboard-toggle){display:none}.footerstamp{margin-top:24px;font-size:12px;color:#555}
+@media print{.row:nth-of-type(3){page-break-after:always;break-after:page;} *{-webkit-print-color-adjust:exact;print-color-adjust:exact}.menu,.toggle,.ML__keyboard,.ML__virtual-keyboard-toggle,.ML__menu-toggle,.ML__keyboard-toggle,.ML__popover-toggle,.ML__toolbar,.ML__menu-container,.ML__keyboard-container{display:none !important}.topbar{position:static}.row{break-inside:avoid;page-break-inside:avoid}input,math-field{border:none !important;background:transparent !important;padding:0 !important;box-shadow:none !important}}
+</style>
+</head>
+<body>
+<div class='topbar'>
+<div class='left'><div class='logo'><p style="font-size: 20px;">&#66318</p></div><div class='title'>Grid Patterns</div></div>
+<input class='meta' id='meta' placeholder='Your Name'>
+<div class='menu' id='menu'>
+<button onclick='preparePrint()'>PDF</button>
+<button id='htmlBtn' onclick='downloadStatic()'>HTML</button>
+</div></div>
+<div id='app'></div>
+<div class='footerstamp'>Patterns by <span id='liveName'></span> <span id='liveStamp'></span> – Design by <a href="http://www.bthomaslee.com">Brian Lee</a> © 2026.</div>
+<script>
+const colors=['#c10000','#ee7d1e','#ffc200','#70af3c','#436fc8','#7028a3'];
+const app=document.getElementById('app');
+const state={rows:[],meta:'',history:[]};
+function nowStamp(){const n=new Date();return n.getFullYear()+'.'+String(n.getMonth()+1).padStart(2,'0')+'.'+String(n.getDate()).padStart(2,'0')+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');}
+function updateStamp(){document.getElementById('liveStamp').textContent=''+nowStamp();document.getElementById('liveName').textContent=document.getElementById('meta').value||'Anonymous';}
+setInterval(updateStamp,1000);updateStamp();
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();undoLast();}});
+function pushHistory(){state.history.push(JSON.stringify(state.rows));if(state.history.length>50)state.history.shift();}
+function undoLast(){if(state.history.length<2)return;state.history.pop();state.rows=JSON.parse(state.history[state.history.length-1]);render();}
+function init(){state.rows=[];for(let r=0;r<6;r++){const row={formula:'',panels:[]};for(let p=0;p<3;p++)row.panels.push({x:String(p),show:true,cells:Array(100).fill(0)});state.rows.push(row);}pushHistory();render();}
+function count(arr){return arr.reduce((a,b)=>a+b,0)}
+function render(){app.innerHTML='';document.getElementById('meta').value=state.meta||'';state.rows.forEach((row,r)=>{const wrap=document.createElement('div');wrap.className='row';const gridrow=document.createElement('div');gridrow.className='gridrow';const grids=document.createElement('div');grids.className='grids';row.panels.forEach((panel,p)=>{const box=document.createElement('div');box.className='panel';const coords=document.createElement('div');coords.className='coords';coords.innerHTML=`<input value='${panel.x}'>, <span class='area'>${panel.show?count(panel.cells):'____'}</span>`;coords.querySelector('input').oninput=e=>{panel.x=e.target.value;};box.appendChild(coords);const grid=document.createElement('div');grid.className='grid';let down=false,start=0,mode='fill',hoverIndex=0;for(let i=0;i<100;i++){const c=document.createElement('div');c.className='cell';c.style.background=panel.cells[i]?colors[r]:'#fff';c.onmousedown=e=>{pushHistory();down=true;start=i;hoverIndex=i;mode=e.shiftKey?'rect':(panel.cells[i]?'erase':'fill');if(mode!=='rect'){panel.cells[i]=mode==='fill'?1:0;c.style.background=panel.cells[i]?colors[r]:'#fff';coords.querySelector('.area').textContent=panel.show?count(panel.cells):'____';}};c.onmouseenter=()=>{hoverIndex=i;if(down&&mode!=='rect'){panel.cells[i]=mode==='fill'?1:0;c.style.background=panel.cells[i]?colors[r]:'#fff';coords.querySelector('.area').textContent=panel.show?count(panel.cells):'____';}};grid.appendChild(c);}document.addEventListener('mouseup',()=>{if(down&&mode==='rect'){let r1=Math.floor(start/10),c1=start%10,r2=Math.floor(hoverIndex/10),c2=hoverIndex%10;for(let rr=Math.min(r1,r2);rr<=Math.max(r1,r2);rr++){for(let cc=Math.min(c1,c2);cc<=Math.max(c1,c2);cc++){panel.cells[rr*10+cc]=1;grid.children[rr*10+cc].style.background=colors[r];}}coords.querySelector('.area').textContent=panel.show?count(panel.cells):'____';}down=false});box.appendChild(grid);grids.appendChild(box);});const eye=document.createElement('button');eye.className='toggle';eye.textContent='◌';eye.onclick=()=>{state.meta=document.getElementById('meta').value;row.panels.forEach(p=>p.show=!p.show);render();};gridrow.appendChild(grids);gridrow.appendChild(eye);wrap.appendChild(gridrow);const f=document.createElement('div');f.className='formula';f.innerHTML="Formula(s): <math-field></math-field>";setTimeout(()=>{const mf=f.querySelector('math-field');mf.value=row.formula;mf.addEventListener('input',()=>row.formula=mf.value);},0);wrap.appendChild(f);app.appendChild(wrap);});}
+function staticClone(){
+  const clone=document.documentElement.cloneNode(true);
+  const pdfBtn = clone.querySelector(".menu button");
+    if(pdfBtn) pdfBtn.setAttribute("onclick","window.print()");
+
+  // remove ONLY app scripts, keep MathLive
+  clone.querySelectorAll('script').forEach(s=>{
+    if(!s.src || !s.src.includes('mathlive')) s.remove();
+  });
+
+  // REMOVE HTML button and toggle buttons
+  clone.querySelectorAll('#htmlBtn,.toggle').forEach(x=>x.remove());
+
+  // freeze ALL inputs EXCEPT top name field
+  clone.querySelectorAll('input').forEach(i=>{
+    if(i.id==='meta') return; // KEEP name editable
+
+    const s=document.createElement('span');
+    s.textContent=' '+i.value+' ';
+    s.style.display='inline-block';
+    s.style.minWidth='56px';
+    s.style.textAlign='center';
+    i.replaceWith(s);
+  });
+
+  // restore clean math fields for export
+  clone.querySelectorAll('.formula').forEach(f=>{
+    f.innerHTML="Formula(s): <math-field></math-field>";
+  });
+
+  return clone;
+}
+function downloadStatic(){const clone=staticClone();const blob=new Blob(['<!DOCTYPE html>'+clone.outerHTML],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);const base=((state.meta||document.getElementById('meta').value||'Anonymous').trim().split(' ').join('-'))+'_'+nowStamp().replace(' ','-').split(':').join('.');a.download=base+'.html';clone.querySelector('title').textContent=base;document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),300);}
+function preparePrint(){state.meta=document.getElementById('meta').value;updateStamp();document.title=((state.meta||'Anonymous').trim().split(' ').join('-'))+'_'+nowStamp().replace(' ','-').split(':').join('.');window.print();}
+init();
+</script>
+</body>
+</html>
